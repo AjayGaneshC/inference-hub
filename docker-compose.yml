@@ -1,0 +1,30 @@
+services:
+  inference-hub:
+    build: .
+    image: inference-hub:latest
+    container_name: inference-hub
+    ports:
+      - "8000:8000"
+    environment:
+      WEIGHTS_ROOT: /weights
+      DOWNLOADS_ROOT: /downloads
+      REFS_ROOT: /workspace/refs
+      INFERENCE_DEVICE: cuda
+    volumes:
+      # Weights and original model repos — all mounted read-only.
+      - ${HOME}/Ajay-Codes:/weights:ro
+      - ${HOME}/Downloads:/downloads:ro
+      # Original training/inference repos so wrappers can sys.path-import their model classes.
+      - ${HOME}/Ajay-Codes/Models-trained-on-Artery-data/VIT-Artery:/workspace/refs/VIT-Artery:ro
+      - ${HOME}/Ajay-Codes/Models-trained-on-Artery-data/Faster-RCNN-Mobilnet:/workspace/refs/Faster-RCNN-Mobilnet:ro
+      - ${HOME}/Ajay-Codes/MobileDet:/workspace/refs/MobileDet:ro
+      - ${HOME}/Ajay-Codes/Models-trained-on-Artery-data/NanoDet:/workspace/refs/NanoDet:ro
+      - ${HOME}/Ajay-Codes/Models-trained-on-Artery-data/RF-DETR:/workspace/refs/RF-DETR:ro
+      - ${HOME}/Downloads/Xception-codes-20251029T053922Z-1-001/Xception-codes:/workspace/refs/Xception-codes:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
