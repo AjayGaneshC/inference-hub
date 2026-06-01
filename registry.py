@@ -50,10 +50,11 @@ MODEL_REGISTRY: Dict[str, Callable[[], BaseInference]] = {
         weight_path=_w("Models-trained-on-Artery-data/RTDETR/runs/detect/train5/weights/best.pt"),
         device=DEVICE,
     ),
-    # TODO(weights): no artery-trained yolo11n exists on disk yet — this still
-    # points at stock COCO yolo11n.pt. Replace with the trained checkpoint path.
+    # Artery-trained YOLO11n (task=detect, classes ["Artery"]), loaded via the
+    # ultralytics YOLO class like RT-DETR. The checkpoint ships in the repo root,
+    # which is mounted into the container under /weights/inference-hub.
     "YOLO 11n": lambda: RTDETRInference(
-        weight_path=_w("Models-trained-on-Artery-data/RTDETR/yolo11n.pt"),
+        weight_path=_w("inference-hub/11n_new_best.pt"),
         device=DEVICE,
     ),
     "ViT-Artery": lambda: ViTArteryInference(
@@ -81,7 +82,12 @@ MODEL_REGISTRY: Dict[str, Callable[[], BaseInference]] = {
         weight_path=_w("Models-trained-on-Artery-data/RF-DETR/output_artery/checkpoint.pth"),
         device=DEVICE,
         repo_path=_r("RF-DETR/rf-detr"),
-        resolution=644,
+        # RF-DETR's windowed attention requires resolution divisible by 14*4=56.
+        # The checkpoint's saved arg is 644 (not a multiple of 56), which crashes
+        # at inference ("shape '[1,4,11,4,11,-1]' is invalid"): a 644px square is a
+        # 46x46 patch grid, but the windowing targets 44x44. 616 (=11*56) is the
+        # valid resolution the model effectively rounds 644 down to.
+        resolution=616,
         num_classes=1,
         out_feature_indexes=[9],
     ),
