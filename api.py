@@ -26,10 +26,20 @@ def get_model(name: str):
     return inst
 
 
-def _encode_png_b64(img: Image.Image) -> str:
+_PREVIEW_MAX_SIDE = int(os.environ.get("PREVIEW_MAX_SIDE", "1024"))
+_PREVIEW_JPEG_QUALITY = int(os.environ.get("PREVIEW_JPEG_QUALITY", "82"))
+
+
+def _encode_preview_b64(img: Image.Image) -> str:
+    rgb = img.convert("RGB")
+    w, h = rgb.size
+    m = max(w, h)
+    if m > _PREVIEW_MAX_SIDE:
+        s = _PREVIEW_MAX_SIDE / m
+        rgb = rgb.resize((int(w * s), int(h * s)), Image.LANCZOS)
     buf = io.BytesIO()
-    img.convert("RGB").save(buf, format="PNG")
-    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+    rgb.save(buf, format="JPEG", quality=_PREVIEW_JPEG_QUALITY, optimize=True)
+    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
 class DetectionOut(BaseModel):
@@ -56,8 +66,8 @@ app = FastAPI(title="Vessel Vision Inference Hub API")
 _extra = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", *_extra],
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origins=_extra,
+    allow_origin_regex=r"^(https?://localhost(:\d+)?|https?://127\.0\.0\.1(:\d+)?|https://.*\.vercel\.app)$",
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -104,7 +114,7 @@ async def infer(
                     model=name,
                     latency_ms=r.latency_ms,
                     detections=[DetectionOut(**asdict(d)) for d in r.detections],
-                    annotated_image_b64=_encode_png_b64(annotated),
+                    annotated_image_b64=_encode_preview_b64(annotated),
                 )
             )
         except Exception as e:

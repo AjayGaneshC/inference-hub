@@ -4,7 +4,7 @@ services:
     image: inference-hub:latest
     container_name: inference-hub
     ports:
-      - "8000:8000"
+      - "8080:8000"
     environment:
       WEIGHTS_ROOT: /weights
       DOWNLOADS_ROOT: /downloads

@@ -42,10 +42,16 @@ def _r(*parts: str) -> str:
 
 # name → factory. Models are loaded lazily on first selection.
 MODEL_REGISTRY: Dict[str, Callable[[], BaseInference]] = {
+    # The artery-trained RT-DETR is the run5 checkpoint (RTDETRDetectionModel,
+    # classes ["Background", "Artery"]) loaded by the repo's own test.py/train.py.
+    # NOTE: rtdetr-l.pt / yolo11n.pt in this folder are the *stock COCO* downloads,
+    # NOT artery-trained — do not point production at them.
     "RT-DETR-L": lambda: RTDETRInference(
-        weight_path=_w("Models-trained-on-Artery-data/RTDETR/rtdetr-l.pt"),
+        weight_path=_w("Models-trained-on-Artery-data/RTDETR/runs/detect/train5/weights/best.pt"),
         device=DEVICE,
     ),
+    # TODO(weights): no artery-trained yolo11n exists on disk yet — this still
+    # points at stock COCO yolo11n.pt. Replace with the trained checkpoint path.
     "YOLO 11n": lambda: RTDETRInference(
         weight_path=_w("Models-trained-on-Artery-data/RTDETR/yolo11n.pt"),
         device=DEVICE,
@@ -72,11 +78,12 @@ MODEL_REGISTRY: Dict[str, Callable[[], BaseInference]] = {
         config_path=_r("NanoDet/config/nanodet_custom.yml"),
     ),
     "RF-DETR": lambda: RFDETRInference(
-        weight_path=_w("Models-trained-on-Artery-data/RF-DETR/rf-detr-base.pth"),
+        weight_path=_w("Models-trained-on-Artery-data/RF-DETR/output_artery/checkpoint.pth"),
         device=DEVICE,
         repo_path=_r("RF-DETR/rf-detr"),
         resolution=644,
         num_classes=1,
+        out_feature_indexes=[9],
     ),
     "DenseNet": lambda: DenseNetInference(
         weight_path=_w("densenet/checkpoints/densenet_best.pt"),

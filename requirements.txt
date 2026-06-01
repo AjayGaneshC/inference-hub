@@ -6,6 +6,7 @@ ultralytics>=8.3
 pillow>=10.0
 numpy>=1.26
 opencv-python-headless>=4.9
+pycocotools>=2.0.7
 # NanoDet repo dependencies
 pyyaml>=6.0
 pytorch-lightning>=2.0
@@ -15,6 +16,9 @@ termcolor>=2.4
 supervision>=0.21
 pydantic>=2
 peft>=0.10
+# RF-DETR uses transformers.pytorch_utils.find_pruneable_heads_and_indices,
+# removed in transformers 5.x. Pin to a 4.x release.
+transformers>=4.40,<5
 # Xception uses timm-backed backbones
 timm>=0.9
 # Loaded but optional; kept for parity with original training scripts

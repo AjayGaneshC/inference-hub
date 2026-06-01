@@ -22,10 +22,13 @@ class RTDETRInference(BaseInference):
         self.load()
         conf = threshold if threshold is not None else self.default_threshold
         img_rgb = image.convert("RGB")
-        arr = np.array(img_rgb)
 
+        # Pass the PIL image, not a bare numpy array: ultralytics' RT-DETR
+        # postprocess (8.4.x) mishandles a single ndarray source and raises
+        # "'list' object has no attribute 'shape'". A PIL image (like the file
+        # paths the original RTDETR/test.py uses) avoids that code path.
         t0 = time.perf_counter()
-        result = self.model.predict(source=arr, conf=conf, iou=0.7, save=False, verbose=False)[0]
+        result = self.model.predict(source=img_rgb, conf=conf, iou=0.7, save=False, verbose=False)[0]
         latency_ms = (time.perf_counter() - t0) * 1000.0
 
         dets: list[Detection] = []

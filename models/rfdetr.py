@@ -20,11 +20,13 @@ class RFDETRInference(BaseInference):
     default_threshold = 0.5
 
     def __init__(self, weight_path: str, device: str = "cuda",
-                 repo_path: str = "", resolution: int = 644, num_classes: int = 1):
+                 repo_path: str = "", resolution: int = 644, num_classes: int = 1,
+                 out_feature_indexes=None):
         super().__init__(weight_path=weight_path, device=device)
         self.repo_path = repo_path
         self.resolution = resolution
         self.num_classes = num_classes
+        self.out_feature_indexes = out_feature_indexes
 
     def _load(self) -> None:
         repo = Path(self.repo_path)
@@ -34,11 +36,14 @@ class RFDETRInference(BaseInference):
             sys.path.insert(0, str(repo))
         from rfdetr import RFDETRBase  # noqa
 
-        self.model = RFDETRBase(
+        kwargs = dict(
             pretrain_weights=self.weight_path,
             num_classes=self.num_classes,
             resolution=self.resolution,
         )
+        if self.out_feature_indexes is not None:
+            kwargs["out_feature_indexes"] = self.out_feature_indexes
+        self.model = RFDETRBase(**kwargs)
 
     def predict(self, image: Image.Image, threshold=None) -> InferenceResult:
         self.load()
