@@ -44,7 +44,10 @@ export default function Page() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch(`${API_URL}/models`, { cache: "no-store" });
+        const r = await fetch(`${API_URL}/models`, {
+          cache: "no-store",
+          headers: { "ngrok-skip-browser-warning": "true" },
+        });
         if (!r.ok) throw new Error(`status ${r.status}`);
         const data = await r.json();
         if (cancelled) return;
@@ -91,7 +94,11 @@ export default function Page() {
       fd.append("image", file);
       fd.append("models", Array.from(selected).join(","));
       fd.append("threshold", String(threshold));
-      const r = await fetch(`${API_URL}/infer`, { method: "POST", body: fd });
+      const r = await fetch(`${API_URL}/infer`, {
+        method: "POST",
+        body: fd,
+        headers: { "ngrok-skip-browser-warning": "true" },
+      });
       if (!r.ok) {
         const text = await r.text();
         throw new Error(`HTTP ${r.status}: ${text}`);
